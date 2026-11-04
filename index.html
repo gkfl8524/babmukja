@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>밥먹자 - 맛집 기록 및 AI 추천 플랫폼</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts (Inter & Pretendard vibe) -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cream: '#FDFBF7',
+                        warmOrange: '#FF7A00',
+                        orangeHover: '#E56D00',
+                        deepBrown: '#3D2C1E',
+                        softBrown: '#8C7A6B',
+                        cardBg: '#FFFFFF',
+                        borderLight: '#F0EBE1'
+                    },
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #FDFBF7;
+            color: #3D2C1E;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* Custom Scrollbar for smooth modern look */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #FDFBF7;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #E5DFC5;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #C7BC9E;
+        }
+    </style>
+</head>
+<body class="bg-cream text-deepBrown min-h-screen pb-20 md:pb-0 md:pl-64">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+    <!-- SIDEBAR NAVIGATION (Desktop) -->
+    <aside class="hidden md:flex flex-col w-64 fixed inset-y-0 left-0 bg-white border-r border-borderLight z-30 p-6 justify-between">
+        <div>
+            <!-- Logo -->
+            <div class="flex items-center space-x-3 mb-10 cursor-pointer" onclick="switchTab('home')">
+                <div class="w-10 h-10 rounded-2xl bg-warmOrange flex items-center justify-center text-white text-xl shadow-md shadow-warmOrange/30">
+                    <i class="fa-solid fa-bowl-rice"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-extrabold tracking-tight">밥먹자</h1>
+                    <p class="text-xs text-softBrown font-medium">나만의 미식 아카이브</p>
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="space-y-2">
+                <button onclick="switchTab('home')" id="nav-home" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-semibold transition-all text-warmOrange bg-orange-50">
+                    <i class="fa-solid fa-house w-6 text-center"></i>
+                    <span>홈</span>
+                </button>
+                <button onclick="switchTab('explore')" id="nav-explore" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-semibold text-softBrown hover:bg-cream hover:text-deepBrown transition-all">
+                    <i class="fa-solid fa-compass w-6 text-center"></i>
+                    <span>주변 탐색</span>
+                </button>
+                <button onclick="switchTab('logs')" id="nav-logs" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-semibold text-softBrown hover:bg-cream hover:text-deepBrown transition-all">
+                    <i class="fa-solid fa-book-open w-6 text-center"></i>
+                    <span>밥먹자 기록</span>
+                </button>
+                <button onclick="switchTab('ai')" id="nav-ai" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-semibold text-softBrown hover:bg-cream hover:text-deepBrown transition-all">
+                    <i class="fa-solid fa-wand-magic-sparkles w-6 text-center"></i>
+                    <span>AI 추천</span>
+                </button>
+                <button onclick="switchTab('mypage')" id="nav-mypage" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-semibold text-softBrown hover:bg-cream hover:text-deepBrown transition-all">
+                    <i class="fa-solid fa-user-gear w-6 text-center"></i>
+                    <span>마이페이지</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Quick Add Button (Desktop Sidebar) -->
+        <div class="pt-6 border-t border-borderLight">
+            <button onclick="openLogModal()" class="w-full py-3.5 px-4 bg-warmOrange hover:bg-orangeHover text-white font-bold rounded-2xl shadow-lg shadow-warmOrange/30 flex items-center justify-center space-x-2 transition-all transform hover:-translate-y-0.5">
+                <i class="fa-solid fa-plus"></i>
+                <span>맛집 기록하기</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- BOTTOM NAVIGATION (Mobile) -->
+    <nav class="md:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-borderLight z-30 px-4 py-2 flex justify-around items-center">
+        <button onclick="switchTab('home')" id="mob-nav-home" class="mob-nav-btn flex flex-col items-center py-1 px-3 text-warmOrange">
+            <i class="fa-solid fa-house text-lg"></i>
+            <span class="text-[10px] font-bold mt-1">홈</span>
+        </button>
+        <button onclick="switchTab('explore')" id="mob-nav-explore" class="mob-nav-btn flex flex-col items-center py-1 px-3 text-softBrown">
+            <i class="fa-solid fa-compass text-lg"></i>
+            <span class="text-[10px] font-medium mt-1">탐색</span>
+        </button>
+        <!-- Center Floating Action Button for Mobile -->
+        <button onclick="openLogModal()" class="w-12 h-12 bg-warmOrange text-white rounded-full flex items-center justify-center shadow-lg shadow-warmOrange/40 -mt-5 transform active:scale-95 transition-transform">
+            <i class="fa-solid fa-plus text-xl"></i>
+        </button>
+        <button onclick="switchTab('logs')" id="mob-nav-logs" class="mob-nav-btn flex flex-col items-center py-1 px-3 text-softBrown">
+            <i class="fa-solid fa-book-open text-lg"></i>
+            <span class="text-[10px] font-medium mt-1">기록</span>
+        </button>
+        <button onclick="switchTab('ai')" id="mob-nav-ai" class="mob-nav-btn flex flex-col items-center py-1 px-3 text-softBrown">
+            <i class="fa-solid fa-wand-magic-sparkles text-lg"></i>
+            <span class="text-[10px] font-medium mt-1">AI추천</span>
+        </button>
+        <button onclick="switchTab('mypage')" id="mob-nav-mypage" class="mob-nav-btn flex flex-col items-center py-1 px-3 text-softBrown">
+            <i class="fa-solid fa-user text-lg"></i>
+            <span class="text-[10px] font-medium mt-1">MY</span>
+        </button>
+    </nav>
+
+    <!-- MAIN CONTENT WRAPPER -->
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 py-6 md:py-10">
+
+        <!-- ================= TAB 1: HOME ================= -->
+        <section id="tab-home" class="tab-content space-y-8 animate-fadeIn">
+            <!-- Header greeting -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 sm:p-8 rounded-3xl border border-borderLight shadow-sm">
+                <div>
+                    <div class="flex items-center space-x-2 mb-1">
+                        <span class="px-2.5 py-0.5 bg-orange-100 text-warmOrange font-bold text-xs rounded-full">오늘의 미식 리포트</span>
+                        <span class="text-xs text-softBrown" id="current-date-display">2026. 06. 06</span>
+                    </div>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-deepBrown tracking-tight">안녕하세요, 미식가님! 🍽️</h2>
+                    <p class="text-softBrown text-sm mt-1">이번 달 총 <span id="home-month-count" class="font-bold text-warmOrange">0건</span>의 맛집을 기록하고 <span id="home-month-spend" class="font-bold text-deepBrown">0원</span>을 지출하셨어요.</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button onclick="openLogModal()" class="flex-1 sm:flex-none px-5 py-3 bg-warmOrange hover:bg-orangeHover text-white font-bold rounded-2xl shadow-md shadow-warmOrange/20 transition-all flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-pen-nib"></i>
+                        <span>빠른 기록</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Today's AI Recommendation Banner -->
+            <div class="bg-gradient-to-r from-deepBrown to-[#543E2C] text-white p-6 sm:p-8 rounded-3xl shadow-xl relative overflow-hidden">
+                <div class="absolute right-0 bottom-0 translate-x-6 translate-y-6 text-white/5 text-9xl pointer-events-none">
+                    <i class="fa-solid fa-utensils"></i>
+                </div>
+                <div class="relative z-10">
+                    <div class="flex items-center space-x-2 text-warmOrange font-bold text-xs uppercase tracking-wider mb-2">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span>AI 맞춤 추천 Pick</span>
+                    </div>
+                    <h3 id="home-ai-title" class="text-xl sm:text-2xl font-extrabold mb-1">로딩 중...</h3>
+                    <p id="home-ai-reason" class="text-white/80 text-sm max-w-xl mb-4">과거 기록과 취향을 분석하여 오늘의 맞춤 장소를 추천해 드립니다.</p>
+                    <button onclick="switchTab('ai')" class="px-4 py-2 bg-warmOrange hover:bg-orangeHover text-white font-semibold rounded-xl text-sm transition-all shadow-md">
+                        AI 추천 더보기 &rarr;
+                    </button>
+                </div>
+            </div>
+
+            <!-- Grid Layout for Explore & Recent -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Left 2 Cols: Recent Logs -->
+                <div class="lg:col-span-2 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-bold text-deepBrown flex items-center space-x-2">
+                            <i class="fa-solid fa-clock-rotate-left text-warmOrange"></i>
+                            <span>최근 밥먹자 기록</span>
+                        </h3>
+                        <button onclick="switchTab('logs')" class="text-sm font-semibold text-warmOrange hover:underline">전체보기</button>
+                    </div>
+                    <div id="home-recent-logs-list" class="space-y-3">
+                        <!-- Dynamically populated -->
+                    </div>
+                </div>
+
+                <!-- Right 1 Col: Quick Stats & Popular places -->
+                <div class="space-y-6">
+                    <!-- Stat Card -->
+                    <div class="bg-white p-6 rounded-3xl border border-borderLight shadow-sm space-y-4">
+                        <h3 class="text-md font-bold text-deepBrown flex items-center space-x-2">
+                            <i class="fa-solid fa-chart-pie text-warmOrange"></i>
+                            <span>이번 달 카테고리 TOP</span>
+                        </h3>
+                        <div id="home-top-category" class="space-y-2 text-sm">
+                            <p class="text-softBrown">아직 기록된 데이터가 없습니다.</p>
+                        </div>
+                        <button onclick="switchTab('mypage')" class="w-full py-2 bg-cream hover:bg-orange-50 text-deepBrown font-bold text-xs rounded-xl border border-borderLight transition-all">
+                            전체 통계 대시보드 보기
+                        </button>
+                    </div>
+
+                    <!-- Nearby Popular Mini List -->
+                    <div class="bg-white p-6 rounded-3xl border border-borderLight shadow-sm space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-md font-bold text-deepBrown flex items-center space-x-2">
+                                <i class="fa-solid fa-fire text-warmOrange"></i>
+                                <span>인기 장소 스냅샷</span>
+                            </h3>
+                            <button onclick="switchTab('explore')" class="text-xs font-semibold text-warmOrange hover:underline">더보기</button>
+                        </div>
+                        <div id="home-popular-mini" class="space-y-3">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB 2: EXPLORE (주변 탐색) ================= -->
+        <section id="tab-explore" class="tab-content hidden space-y-6 animate-fadeIn">
+            <div class="bg-white p-6 rounded-3xl border border-borderLight shadow-sm space-y-4">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-2xl font-extrabold text-deepBrown tracking-tight">주변 장소 탐색 🧭</h2>
+                        <p class="text-softBrown text-sm">실제 검증된 맛집, 카페, 술집을 확인하고 내 기록과 연동해보세요.</p>
+                    </div>
+                    <!-- Search Input -->
+                    <div class="relative flex-1 max-w-md">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-softBrown">
+                            <i class="fa-solid fa-search"></i>
+                        </span>
+                        <input type="text" id="explore-search-input" oninput="filterExplorePlaces()" placeholder="장소명, 지역 (예: 성수동, 고깃집, 카페)..." class="w-full pl-11 pr-4 py-3 bg-cream border border-borderLight rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-warmOrange/50">
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-borderLight">
+                    <span class="text-xs font-bold text-softBrown mr-2">유형 필터:</span>
+                    <button onclick="setExploreTypeFilter('all')" id="exp-type-all" class="exp-filter-btn px-4 py-1.5 rounded-xl text-xs font-bold bg-warmOrange text-white transition-all">전체</button>
+                    <button onclick="setExploreTypeFilter('음식점')" id="exp-type-음식점" class="exp-filter-btn px-4 py-1.5 rounded-xl text-xs font-bold bg-cream text-deepBrown hover:bg-orange-50 transition-all">음식점</button>
+                    <button onclick="setExploreTypeFilter('카페')" id="exp-type-카페" class="exp-filter-btn px-4 py-1.5 rounded-xl text-xs font-bold bg-cream text-deepBrown hover:bg-orange-50 transition-all">카페</button>
+                    <button onclick="setExploreTypeFilter('술집')" id="exp-type-술집" class="exp-filter-btn px-4 py-1.5 rounded-xl text-xs font-bold bg-cream text-deepBrown hover:bg-orange-50 transition-all">술집</button>
+                </div>
+            </div>
+
+            <!-- Explore Results Grid -->
+            <div id="explore-places-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Dynamically populated -->
+            </div>
+        </section>
+
+        <!-- ================= TAB 3: LOGS (밥먹자 기록) ================= -->
+        <section id="tab-logs" class="tab-content hidden space-y-6 animate-fadeIn">
+            <div class="bg-white p-6 rounded-3xl border border-borderLight shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-2xl font-extrabold text-deepBrown tracking-tight">나의 밥먹자 기록장 📖</h2>
+                    <p class="text-softBrown text-sm">내가 방문하거나 배달해 먹은 모든 미식 경험을 기록하고 관리하세요.</p>
+                </div>
+                <button onclick="openLogModal()" class="px-5 py-3 bg-warmOrange hover:bg-orangeHover text-white font-bold rounded-2xl shadow-md shadow-warmOrange/20 transition-all flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>새 기록 추가하기</span>
+                </button>
+            </div>
+
+            <!-- Filter Tabs for Logs -->
+            <div class="flex flex-wrap items-center gap-2 bg-white p-4 rounded-2xl border border-borderLight shadow-sm">
+                <span class="text-xs font-bold text-softBrown mr-2"><i class="fa-solid fa-filter mr-1"></i> 필터:</span>
+                <button onclick="setLogFilter('all')" id="log-filter-all" class="log-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-warmOrange text-white transition-all">전체</button>
+                <button onclick="setLogFilter('음식점')" id="log-filter-음식점" class="log-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-cream text-deepBrown hover:bg-orange-50 transition-all">음식점</button>
+                <button onclick="setLogFilter('카페')" id="log-filter-카페" class="log-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-cream text-deepBrown hover:bg-orange-50 transition-all">카페</button>
+                <button onclick="setLogFilter('술집')" id="log-filter-술집" class="log-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-cream text-deepBrown hover:bg-orange-50 transition-all">술집</button>
+            </div>
+
+            <!-- Logs List Container -->
+            <div id="logs-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Dynamically populated -->
+            </div>
+        </section>
+
+        <!-- ================= TAB 4: AI RECOMMENDATION (AI 맞춤 추천) ================= -->
+        <section id="tab-ai" class="tab-content hidden space-y-6 animate-fadeIn">
+            <div class="bg-gradient-to-r from-warmOrange to-orangeHover text-white p-6 sm:p-8 rounded-3xl shadow-lg relative overflow-hidden">
+                <div class="absolute right-4 bottom-4 text-white/10 text-9xl pointer-events-none">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                </div>
+                <div class="relative z-10 max-w-2xl">
+                    <span class="px-3 py-1 bg-white/20 text-white font-bold text-xs rounded-full inline-block mb-3">SMART AI GOURMET</span>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2">나만의 맞춤 미식 AI 추천</h2>
+                    <p class="text-white/90 text-sm">과거 나의 평점, 지출 패턴, 선호 카테고리를 실시간으로 분석하여 실패 없는 최적의 장소를 콕 집어 추천해 드립니다.</p>
+                </div>
+            </div>
+
+            <!-- AI Filter Controls -->
+            <div class="bg-white p-6 rounded-3xl border border-borderLight shadow-sm space-y-4">
+                <h3 class="text-md font-bold text-deepBrown flex items-center space-x-2">
+                    <i class="fa-solid fa-sliders text-warmOrange"></i>
+                    <span>추천 성향 설정</span>
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-softBrown mb-1">추천 목적</label>
+                        <select id="ai-purpose" class="w-full p-3 bg-cream border border-borderLight rounded-xl text-sm font-semibold text-deepBrown focus:outline-none focus:ring-2 focus:ring-warmOrange/50">
+                            <option value="내 취향 저격 맛집">내 취향 저격 맛집</option>
+                            <option value="아직 안 가본 새로운 장소">아직 안 가본 새로운 장소</option>
+                            <option value="실패 확률 제로 안전 초이스">실패 확률 제로 안전 초이스</option>
+                            <option value="가성비 최고 맛집">가성비 최고 맛집</option>
+                            <option value="오늘의 랜덤 미식">오늘의 랜덤 미식</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-softBrown mb-1">선호 예산대</label>
+                        <select id="ai-budget" class="w-full p-3 bg-cream border border-borderLight rounded-xl text-sm font-semibold text-deepBrown focus:outline-none focus:ring-2 focus:ring-warmOrange/50">
+                            <option value="상관없음">상관없음 (모든 가격대)</option>
+                            <option value="1.5만이하">1.5만 원 이하 (가성비)</option>
+                            <option value="3만이하">3만 원 이하 (적당한 가격)</option>
+                            <option value="3만이상">3만 원 이상 (프리미엄)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-softBrown mb-1">지역 / 동네</label>
+                        <select id="ai-region" class="w-full p-3 bg-cream border border-borderLight rounded-xl text-sm font-semibold text-deepBrown focus:outline-none focus:ring-2 focus:ring-warmOrange/50">
+                            <option value="전체">전체 지역 (내 주변)</option>
+                            <option value="성수">성수동 일대</option>
+                            <option value="울산">울산 삼산동</option>
+                            <option value="서울역">서울역 / 중구</option>
+                        </select>
+                    </div>
+                </div>
+                <button onclick="runAiRecommendation()" class="w-full py-3.5 bg-warmOrange hover:bg-orangeHover text-white font-bold rounded-2xl shadow-md shadow-warmOrange/30 transition-all flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span>AI 맞춤 추천 실행하기</span>
+                </button>
+            </div>
+
+            <!-- AI Results Container -->
+            <div id="ai-results-container" class="space-y-4">
+                <!-- Dynamically populated -->
+            </div>
+        </section>
+
+        <!-- ================= TAB 5: MYPAGE & STATISTICS (마이페이지 & 통계 대시보드) ================= -->
+        <section id="tab-mypage" class="tab-content hidden space-y-6 animate-fadeIn">
+            <!-- Profile Card -->
+            <div class="bg-white p-6 sm:p-8 rounded-3xl border border-borderLight shadow-sm flex flex-col sm:flex-row items-center justify-between gap-6">
+                <div class="flex items-center space-x-4">
+                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-warmOrange to-orangeHover text-white text-2xl font-extrabold flex items-center justify-center shadow-lg shadow-warmOrange/30">
+                        밥
+                    </div>
+                    <div>
+                        <h2 class="text-xl sm:text-2xl font-extrabold text-deepBrown">미식탐험가 김밥먹</h2>
+                        <p class="text-softBrown text-sm">bobmukja_user@github.io</p>
+                        <div class="flex items-center space-x-2 mt-2">
+                            <span class="px-2.5 py-0.5 bg-orange-100 text-warmOrange font-bold text-xs rounded-full">Lv. 3 미식가</span>
+                            <span class="text-xs text-softBrown">기록 장수: <span id="my-total-count" class="font-bold text-deepBrown">0개</span></span>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="exportDataJSON()" class="px-4 py-2.5 bg-cream hover:bg-orange-50 border border-borderLight text-deepBrown font-bold text-xs rounded-xl transition-all flex items-center space-x-2">
+                    <i class="fa-solid fa-download"></i>
+                    <span>내 기록 백업 (JSON)</span>
+                </button>
+            </div>
+
+            <!-- Statistics Dashboard Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-3xl border border-borderLight shadow-sm">
+                    <p class="text-xs font-bold text-softBrown uppercase tracking-wider mb-1">총 지출 금액</p>
+                    <h3 id="stat-total-spend" class="text-2xl sm:text-3xl font-extrabold text-deepBrown">0원</h3>
+                    <p class="text-xs text-warmOrange mt-2 font-semibold"><i class="fa-solid fa-arrow-trend-up"></i> 이번 달 누적</p>
+                </div>
+                <div class="bg-white p-6 rounded-3xl border border-borderLight shadow-sm">
+                    <p class="text-xs font-bold text-softBrown uppercase tracking-wider mb-1">평균 맛 만족도</p>
+                    <h3 id="stat-avg-rating" class="text-2xl sm:text-3xl font-extrabold text-deepBrown">0.0 / 5.0</h3>
+                    <p class="text-xs text-warmOrange mt-2 font-semibold"><i class="fa-solid fa-star"></i> 맛 평가 기준</p>
+                </div>
+                <div class="bg-white p-6 rounded-3xl border border-borderLight shadow-sm">
+                    <p class="text-xs font-bold text-softBrown uppercase tracking-wider mb-1">재방문 의사율</p>
+                    <h3 id="stat-revisit-rate" class="text-2xl sm:text-3xl font-extrabold text-deepBrown">0%</h3>
+                    <p class="text-xs text-warmOrange mt-2 font-semibold"><i class="fa-solid fa-heart"></i> 단골 예약 장소</p>
+                </div>
+            </div>
+
+            <!-- Taste Analysis & Breakdown Card -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Taste Analysis -->
+                <div class="bg-white p-6 rounded-3xl border border-borderLight shadow-sm space-y-4">
+                    <h3 class="text-lg font-bold text-deepBrown flex items-center space-x-2">
+                        <i class="fa-solid fa-brain text-warmOrange"></i>
+                        <span>나의 미식 취향 분석 요약</span>
+                    </h3>
+                    <div id="taste-analysis-content" class="space-y-3 text-sm text-deepBrown">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Category Breakdown -->
+                <div class="bg-white p-6 rounded-3xl border border-borderLight shadow-sm space-y-4">
+                    <h3 class="text-lg font-bold text-deepBrown flex items-center space-x-2">
+                        <i class="fa-solid fa-chart-bar text-warmOrange"></i>
+                        <span>음식 카테고리별 기록 분포</span>
+                    </h3>
+                    <div id="category-breakdown-bars" class="space-y-3">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ================= ADD / EDIT LOG MODAL ================= -->
+    <div id="log-modal" class="fixed inset-0 bg-deepBrown/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden my-8 border border-borderLight transform transition-all">
+            <div class="px-6 py-5 bg-warmOrange text-white flex items-center justify-between">
+                <h3 id="modal-title" class="text-lg font-extrabold">새 밥먹자 기록 추가</h3>
+                <button onclick="closeLogModal()" class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white hover:bg-white/30 transition-all">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <form id="log-form" onsubmit="handleLogFormSubmit(event)" class="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
+                <input type="hidden" id="edit-log-id">
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-softBrown mb-1">장소명 *</label>
+                        <input type="text" id="log-place-name" required placeholder="예: 온더시프트 성수" class="w-full p-3 bg-cream border border-borderLight rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-warmOrange/50">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-softBrown mb-1">위치 및 주소 *</label>
+                        <input type="text" id="log-address" required placeholder="예: 서울 성동구 연무장길 12" class="w-full p-3 bg-cream border border-borderLight rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-warmOrange/50">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-softBrown mb-1">장소 유형</label>
+                        <select id="log-place-type" class="w-full p-3 bg-cream border border-borderLight rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-warmOrange/50">
+                            <option value="음식점">음식점</option>
+                            <option value="카페">카페</option>
+                            <option value="술집">술집</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-softBrown mb-1">이용 방식</label>
+                        <select id="log-access-type" class="w-full p-3 bg-cream border border-borderLight rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-warmOrange/50">
+                            <option value="매장 방문">매장 방문</option>
+                            <option value="배달">배달</option>
+                            <option value="포장">포장</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-softBrown mb-1">음식 카테고리</label>
+                        <select id="log-category" class="w-full p-3 bg-cream border border-borderLight rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-warmOrange/50">
+                            <option value="한식">한식</option>
+                            <option value="일식">일식</option>
+                            <option value="중식">중식</option>
+                            <option value="양식">양식</option>
+                            <option value="카페">카페/디저트</option>
+                            <option value="주점">주점/요리주점</option>
+                            <option value="분식">분식</option>
+                            <option value="기타">기타</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-softBrown mb-1">방문/주문 날짜 *</label>
+                        <input type="date" id="log-date" required class="w-full p-3 bg-cream border border-borderLight rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-warmOrange/50">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-softBrown mb-1">총 지출 금액 (원) *</label>
+                        <input type="number" id="log-spend" required placeholder="예: 25000" class="w-full p-3 bg-cream border border-borderLight rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-warmOrange/50">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-softBrown mb-1">먹었던 주요 메뉴 *</label>
+                    <input type="text" id="log-menu" required placeholder="예: 수제 버ガー 세트, 아메리카노" class="w-full p-3 bg-cream border border-borderLight rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-warmOrange/50">
+                </div>
+
+                <!-- Ratings Section -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-cream p-4 rounded-2xl border border-borderLight">
+                    <div>
+                        <label class="block text-xs font-bold text-deepBrown mb-1">맛 평가 (1~5)</label>
+                        <select id="log-rating-taste" class="w-full p-2.5 bg-white border border-borderLight rounded-xl text-sm font-bold">
+                            <option value="5">⭐⭐⭐⭐⭐ (5점 - 완벽)</option>
+                            <option value="4">⭐⭐⭐⭐ (4점 - 훌륭함)</option>
+                            <option value="3" selected>⭐⭐⭐ (3점 - 보통)</option>
+                            <option value="2">⭐⭐ (2점 - 아쉬움)</option>
+                            <option value="1">⭐ (1점 - 별로)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-deepBrown mb-1">가격 만족도 (1~5)</label>
+                        <select id="log-rating-price" class="w-full p-2.5 bg-white border border-borderLight rounded-xl text-sm font-bold">
+                            <option value="5">⭐⭐⭐⭐⭐ (5점 - 갓성비)</option>
+                            <option value="4" selected>⭐⭐⭐⭐ (4점 - 합리적)</option>
+                            <option value="3">⭐⭐⭐ (3점 - 적당함)</option>
+                            <option value="2">⭐⭐ (2점 - 비쌈)</option>
+                            <option value="1">⭐ (1점 - 돈 아까움)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-deepBrown mb-1">분위기 평가 (1~5)</label>
+                        <select id="log-rating-mood" class="w-full p-2.5 bg-white border border-borderLight rounded-xl text-sm font-bold">
+                            <option value="5">⭐⭐⭐⭐⭐ (5점 - 최고 분위기)</option>
+                            <option value="4" selected>⭐⭐⭐⭐ (4점 - 아늑함)</option>
+                            <option value="3">⭐⭐⭐ (3점 - 평범함)</option>
+                            <option value="2">⭐⭐ (2점 - 어수선함)</option>
+                            <option value="1">⭐ (1점 - 별로)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-softBrown mb-1">재방문 의사</label>
+                        <select id="log-revisit" class="w-full p-3 bg-cream border border-borderLight rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-warmOrange/50">
+                            <option value="있음">있음 (단골 예약!)</option>
+                            <option value="고민 중">고민 중</option>
+                            <option value="없음">없음</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-softBrown mb-1">대표 사진 이미지 URL (선택)</label>
+                        <input type="url" id="log-image" placeholder="https://images.unsplash.com/..." class="w-full p-3 bg-cream border border-borderLight rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-warmOrange/50">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-softBrown mb-1">자유 후기 / 메모</label>
+                    <textarea id="log-review" rows="3" placeholder="음식 맛, 서비스, 분위기 등에 대한 솔직한 후기를 남겨주세요." class="w-full p-3 bg-cream border border-borderLight rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-warmOrange/50"></textarea>
+                </div>
+
+                <div class="flex items-center justify-end space-x-3 pt-4 border-t border-borderLight">
+                    <button type="button" onclick="closeLogModal()" class="px-5 py-3 bg-cream hover:bg-orange-50 text-deepBrown font-bold text-sm rounded-xl transition-all">취소</button>
+                    <button type="submit" class="px-6 py-3 bg-warmOrange hover:bg-orangeHover text-white font-bold text-sm rounded-xl shadow-md transition-all">기록 저장하기</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= JAVASCRIPT APPLICATION CORE ================= -->
+    <script>
+        // --- 1. SAMPLE DATA (Pre-loaded Rich Gourmet Experiences) ---
+        const DEFAULT_LOGS = [
+            {
+                id: "log_1",
+                placeName: "온더시프트 성수",
+                placeType: "카페",
+                accessType: "매장 방문",
+                category: "카페",
+                date: "2026-06-04",
+                address: "서울 성동구 연무장길 38 2층",
+                menu: "시그니처 바닐라 빈 라떼, 크로플",
+                spend: 18500,
+                tasteRating: 5,
+                priceRating: 4,
+                moodRating: 5,
+                revisit: "있음",
+                image: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=600&q=80",
+                review: "성수동에서 가장 채광이 예쁘고 커피 향이 진한 카페. 크로플이 겉바속촉 그 자체였다!"
+            },
+            {
+                id: "log_2",
+                placeName: "삼산목우채소고기 울산본점",
+                placeType: "음식점",
+                accessType: "매장 방문",
+                category: "한식",
+                date: "2026-06-01",
+                address: "울산 남구 삼산중로 74",
+                menu: "한우 숙성 한판 모둠, 된장찌개",
+                spend: 84000,
+                tasteRating: 5,
+                priceRating: 4,
+                moodRating: 4,
+                revisit: "있음",
+                image: "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80",
+                review: "고기가 입에서 사르르 녹습니다. 직원분들도 친절하고 회식이나 모임 장소로 최고예요."
+            },
+            {
+                id: "log_3",
+                placeName: "스시소라 서울역점",
+                placeType: "음식점",
+                accessType: "매장 방문",
+                category: "일식",
+                date: "2026-05-28",
+                address: "서울 중구 통일로 10 연세세브란스빌딩 지하 1층",
+                menu: "디너 오마카세 코스",
+                spend: 70000,
+                tasteRating: 5,
+                priceRating: 5,
+                moodRating: 5,
+                revisit: "있음",
+                image: "https://images.unsplash.com/photo-1611143669185-af224c5e3252?auto=format&fit=crop&w=600&q=80",
+                review: "가격대비 구성이 너무 알차고 네타 신선도가 훌륭했습니다. 특별한 날 재방문 의사 200%!"
+            }
+        ];
+
+        const EXPLORE_PLACES = [
+            {
+                id: "exp_1",
+                name: "온더시프트 성수",
+                type: "카페",
+                category: "카페",
+                address: "서울 성동구 연무장길 38",
+                distance: "도보 5분",
+                rating: 4.8,
+                reviewsCount: 342,
+                signatureMenu: "바닐라 빈 라떼",
+                status: "영업 중",
+                image: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=600&q=80"
+            },
+            {
+                id: "exp_2",
+                name: "삼산목우채소고기 울산본점",
+                type: "음식점",
+                category: "한식",
+                address: "울산 남구 삼산중로 74",
+                distance: "내 주변 인기",
+                rating: 4.9,
+                reviewsCount: 512,
+                signatureMenu: "한우 숙성 모둠",
+                status: "영업 중",
+                image: "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80"
+            },
+            {
+                id: "exp_3",
+                name: "스시소라 서울역점",
+                type: "음식점",
+                category: "일식",
+                address: "서울 중구 통일로 10",
+                distance: "도보 10분",
+                rating: 4.9,
+                reviewsCount: 680,
+                signatureMenu: "디너 오마카세",
+                status: "영업 중",
+                image: "https://images.unsplash.com/photo-1611143669185-af224c5e3252?auto=format&fit=crop&w=600&q=80"
+            },
+            {
+                id: "exp_4",
+                name: "성수 대림창고 갤러리",
+                type: "카페",
+                category: "카페",
+                address: "서울 성동구 성수이로 78",
+                distance: "도보 8분",
+                rating: 4.6,
+                reviewsCount: 1420,
+                signatureMenu: "핸드드립 커피 & 브라우니",
+                status: "영업 중",
+                image: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=600&q=80"
+            },
+            {
+                id: "exp_5",
+                name: "이자카야 하루 울산점",
+                type: "술집",
+                category: "주점",
+                address: "울산 남구 왕생로 45",
+                distance: "차량 5분",
+                rating: 4.7,
+                reviewsCount: 215,
+                signatureMenu: "모둠 사시미 & 스지오뎅탕",
+                status: "영업 중",
+                image: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?auto=format&fit=crop&w=600&q=80"
+            },
+            {
+                id: "exp_6",
+                name: "피자피스 서울",
+                type: "음식점",
+                category: "양식",
+                address: "서울 용산구 녹사평대로 40",
+                distance: "대중교통 15분",
+                rating: 4.8,
+                reviewsCount: 430,
+                signatureMenu: "페퍼로니 슬라이스 피자",
+                status: "영업 중",
+                image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=600&q=80"
+            }
+        ];
+
+        // --- 2. INITIALIZATION & LOCALSTORAGE MANAGEMENT ---
+        let logs = [];
+        let currentTab = 'home';
+        let currentLogFilter = 'all';
+        let currentExploreTypeFilter = 'all';
+
+        function initApp() {
+            const savedLogs = localStorage.getItem('bobmukja_logs');
+            if (savedLogs) {
+                try {
+                    logs = JSON.parse(savedLogs);
+                } catch(e) {
+                    logs = DEFAULT_LOGS;
+                }
+            } else {
+                logs = DEFAULT_LOGS;
+                saveLogsToStorage();
+            }
+
+            // Set today's date in form default
+            document.getElementById('log-date').valueAsDate = new Date();
+            
+            // Set date display header
+            const todayStr = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\./g, '.').replace(/\s/g, '');
+            document.getElementById('current-date-display').innerText = todayStr;
+
+            renderAll();
+        }
+
+        function saveLogsToStorage() {
+            localStorage.setItem('bobmukja_logs', JSON.stringify(logs));
+        }
+
+        // --- 3. TAB NAVIGATION CONTROLLER ---
+        function switchTab(tabId) {
+            currentTab = tabId;
+            const tabs = ['home', 'explore', 'logs', 'ai', 'mypage'];
+            
+            tabs.forEach(t => {
+                const sec = document.getElementById(`tab-${t}`);
+                if (sec) sec.classList.add('hidden');
+
+                // Desktop sidebar buttons
+                const dBtn = document.getElementById(`nav-${t}`);
+                if (dBtn) {
+                    if (t === tabId) {
+                        dBtn.className = "nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-semibold transition-all text-warmOrange bg-orange-50 shadow-sm";
+                    } else {
+                        dBtn.className = "nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-semibold text-softBrown hover:bg-cream hover:text-deepBrown transition-all";
+                    }
+                }
+
+                // Mobile navbar buttons
+                const mBtn = document.getElementById(`mob-nav-${t}`);
+                if (mBtn) {
+                    if (t === tabId) {
+                        mBtn.className = "mob-nav-btn flex flex-col items-center py-1 px-3 text-warmOrange";
+                    } else {
+                        mBtn.className = "mob-nav-btn flex flex-col items-center py-1 px-3 text-softBrown";
+                    }
+                }
+            });
+
+            const activeSec = document.getElementById(`tab-${tabId}`);
+            if (activeSec) {
+                activeSec.classList.remove('hidden');
+                activeSec.classList.add('animate-fadeIn');
+            }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            renderAll();
+        }
+
+        function renderAll() {
+            renderHome();
+            renderExplorePlaces();
+            renderLogsList();
+            if (typeof renderAiRecommendation === 'function') {
+                renderAiRecommendation();
+            }
+            renderMypageDashboard();
+        }
+
+        // --- 4. TOAST NOTIFICATIONS ---
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `pointer-events-auto px-5 py-3 rounded-2xl shadow-xl text-white text-sm font-bold flex items-center space-x-3 transition-all transform translate-y-2 opacity-0 ${type === 'success' ? 'bg-deepBrown' : 'bg-red-600'}`;
+            toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check text-warmOrange' : 'fa-circle-exclamation'}"></i><span>${message}</span>`;
+            
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // --- 5. HOME RENDER LOGIC ---
+        function renderHome() {
+            const totalCount = logs.length;
+            const totalSpend = logs.reduce((acc, cur) => acc + Number(cur.spend || 0), 0);
+            
+            document.getElementById('home-month-count').innerText = `${totalCount}건`;
+            document.getElementById('home-month-spend').innerText = totalSpend.toLocaleString() + '원';
+
+            // AI Banner on Home
+            if (logs.length > 0) {
+                const topLog = logs[0];
+                document.getElementById('home-ai-title').innerText = `오늘은 ${topLog.category} 계열 "${topLog.placeName}" 어떠세요?`;
+                document.getElementById('home-ai-reason').innerText = `최근 기록하신 "${topLog.menu}"에 높은 만족도(맛 평점 ${topLog.tasteRating}점)를 주셨기 때문에 유사한 취향의 미식 장소를 추천합니다.`;
+            } else {
+                document.getElementById('home-ai-title').innerText = "첫 번째 맛집을 기록해 보세요!";
+                document.getElementById('home-ai-reason').innerText = "기록이 쌓일수록 AI가 당신의 미식 취향을 정교하게 분석해 추천해 드립니다.";
+            }
+
+            // Recent Logs Mini List
+            const recentContainer = document.getElementById('home-recent-logs-list');
+            if (logs.length === 0) {
+                recentContainer.innerHTML = `<div class="bg-white p-6 rounded-2xl border border-borderLight text-center text-softBrown text-sm">아직 기록이 없습니다. 우측 상단 버튼을 눌러 기록을 추가해보세요!</div>`;
+            } else {
+                recentContainer.innerHTML = logs.slice(0, 3).map(log => `
+                    <div class="bg-white p-4 rounded-2xl border border-borderLight flex items-center justify-between shadow-sm hover:border-warmOrange/50 transition-all">
+                        <div class="flex items-center space-x-4">
+                            <img src="${log.image || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=200&q=80'}" alt="${log.placeName}" class="w-14 h-14 rounded-xl object-cover" onerror="this.src='https://placehold.co/100x100/FDFBF7/3D2C1E?text=Food'">
+                            <div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="px-2 py-0.5 bg-orange-100 text-warmOrange font-extrabold text-[10px] rounded-md">${log.category}</span>
+                                    <span class="text-xs text-softBrown">${log.date}</span>
+                                </div>
+                                <h4 class="font-bold text-deepBrown text-base mt-0.5">${log.placeName}</h4>
+                                <p class="text-xs text-softBrown">${log.menu} · ${Number(log.spend).toLocaleString()}원</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-1 text-amber-500 font-bold text-sm bg-amber-50 px-3 py-1.5 rounded-xl">
+                            <i class="fa-solid fa-star"></i>
+                            <span>${log.tasteRating}.0</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Top Category Mini
+            const catCounts = {};
+            logs.forEach(l => { catCounts[l.category] = (catCounts[l.category] || 0) + 1; });
+            const sortedCats = Object.entries(catCounts).sort((a,b) => b[1] - a[1]);
+            const topCatContainer = document.getElementById('home-top-category');
+            if (sortedCats.length === 0) {
+                topCatContainer.innerHTML = `<p class="text-softBrown text-xs">데이터 없음</p>`;
+            } else {
+                topCatContainer.innerHTML = sortedCats.slice(0, 3).map(([cat, count], idx) => `
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-deepBrown flex items-center space-x-2">
+                            <span class="w-5 h-5 rounded-full bg-orange-100 text-warmOrange flex items-center justify-center text-[10px] font-bold">${idx+1}</span>
+                            <span>${cat}</span>
+                        </span>
+                        <span class="text-xs font-bold text-softBrown">${count}회 기록</span>
+                    </div>
+                `).join('');
+            }
+
+            // Popular Mini
+            const popContainer = document.getElementById('home-popular-mini');
+            popContainer.innerHTML = EXPLORE_PLACES.slice(0, 2).map(p => `
+                <div class="flex items-center space-x-3">
+                    <img src="${p.image}" class="w-12 h-12 rounded-xl object-cover">
+                    <div class="flex-1 min-w-0">
+                        <h5 class="text-xs font-bold text-deepBrown truncate">${p.name}</h5>
+                        <p class="text-[10px] text-softBrown truncate">${p.address} · ⭐ ${p.rating}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // --- 6. EXPLORE RENDER & FILTERS ---
+        function setExploreTypeFilter(type) {
+            currentExploreTypeFilter = type;
+            ['all', '음식점', '카페', '술집'].forEach(t => {
+                const btn = document.getElementById(`exp-type-${t}`);
+                if (btn) {
+                    if (t === type) {
+                        btn.className = "exp-filter-btn px-4 py-1.5 rounded-xl text-xs font-bold bg-warmOrange text-white transition-all";
+                    } else {
+                        btn.className = "exp-filter-btn px-4 py-1.5 rounded-xl text-xs font-bold bg-cream text-deepBrown hover:bg-orange-50 transition-all";
+                    }
+                }
+            });
+            renderExplorePlaces();
+        }
+
+        function filterExplorePlaces() {
+            renderExplorePlaces();
+        }
+
+        function renderExplorePlaces() {
+            const query = (document.getElementById('explore-search-input')?.value || "").toLowerCase();
+            const grid = document.getElementById('explore-places-grid');
+            
+            const filtered = EXPLORE_PLACES.filter(p => {
+                const matchType = currentExploreTypeFilter === 'all' || p.type === currentExploreTypeFilter;
+                const matchQuery = p.name.toLowerCase().includes(query) || p.address.toLowerCase().includes(query) || p.signatureMenu.toLowerCase().includes(query);
+                return matchType && matchQuery;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full bg-white p-12 rounded-3xl border border-borderLight text-center text-softBrown">검색 결과가 없습니다. 다른 검색어를 입력해보세요!</div>`;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(p => `
+                <div class="bg-white rounded-3xl border border-borderLight overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+                    <div>
+                        <div class="relative h-48 overflow-hidden">
+                            <img src="${p.image}" alt="${p.name}" class="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500">
+                            <span class="absolute top-3 left-3 px-3 py-1 bg-deepBrown/80 backdrop-blur-md text-white font-bold text-xs rounded-xl">${p.type}</span>
+                            <span class="absolute top-3 right-3 px-3 py-1 bg-warmOrange text-white font-extrabold text-xs rounded-xl shadow-md">${p.status}</span>
+                        </div>
+                        <div class="p-5 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-warmOrange">${p.category}</span>
+                                <div class="flex items-center space-x-1 text-xs font-bold text-amber-500 bg-amber-50 px-2 py-0.5 rounded-lg">
+                                    <i class="fa-solid fa-star"></i>
+                                    <span>${p.rating} (${p.reviewsCount})</span>
+                                </div>
+                            </div>
+                            <h3 class="text-lg font-extrabold text-deepBrown">${p.name}</h3>
+                            <p class="text-xs text-softBrown flex items-center space-x-1.5">
+                                <i class="fa-solid fa-location-dot text-warmOrange"></i>
+                                <span class="truncate">${p.address} (${p.distance})</span>
+                            </p>
+                            <p class="text-xs font-semibold text-deepBrown bg-cream px-3 py-2 rounded-xl mt-2">
+                                💡 대표 메뉴: <span class="text-warmOrange">${p.signatureMenu}</span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="p-5 pt-0">
+                        <button onclick="quickLogFromExplore('${p.name}', '${p.address}', '${p.type}', '${p.category}')" class="w-full py-2.5 bg-cream hover:bg-orange-50 text-deepBrown font-bold text-xs rounded-xl border border-borderLight transition-all flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-pen-nib text-warmOrange"></i>
+                            <span>이 장소 내 기록으로 추가하기</span>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function quickLogFromExplore(name, address, type, category) {
+            openLogModal();
+            document.getElementById('log-place-name').value = name;
+            document.getElementById('log-address').value = address;
+            document.getElementById('log-place-type').value = type;
+            document.getElementById('log-category').value = category === '카페' ? '카페' : category;
+            showToast(`"${name}" 정보가 기록 창에 입력되었습니다!`, 'success');
+        }
+
+        // --- 7. LOGS MANAGEMENT & RENDERING ---
+        function setLogFilter(filter) {
+            currentLogFilter = filter;
+            ['all', '음식점', '카페', '술집'].forEach(f => {
+                const btn = document.getElementById(`log-filter-${f}`);
+                if (btn) {
+                    if (f === filter) {
+                        btn.className = "log-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-warmOrange text-white transition-all";
+                    } else {
+                        btn.className = "log-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-cream text-deepBrown hover:bg-orange-50 transition-all";
+                    }
+                }
+            });
+            renderLogsList();
+        }
+
+        function renderLogsList() {
+            const container = document.getElementById('logs-container');
+            const filtered = logs.filter(l => currentLogFilter === 'all' || l.placeType === currentLogFilter);
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="col-span-full bg-white p-12 rounded-3xl border border-borderLight text-center text-softBrown">등록된 밥먹자 기록이 없습니다. 첫 미식 경험을 기록해보세요!</div>`;
+                return;
+            }
+
+            container.innerHTML = filtered.map(log => `
+                <div class="bg-white rounded-3xl border border-borderLight overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+                    <div>
+                        <div class="relative h-48 overflow-hidden">
+                            <img src="${log.image || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=600&q=80'}" alt="${log.placeName}" class="w-full h-full object-cover">
+                            <div class="absolute top-3 left-3 flex space-x-2">
+                                <span class="px-3 py-1 bg-deepBrown/80 backdrop-blur-md text-white font-bold text-xs rounded-xl">${log.placeType}</span>
+                                <span class="px-3 py-1 bg-warmOrange text-white font-extrabold text-xs rounded-xl">${log.accessType}</span>
+                            </div>
+                        </div>
+                        <div class="p-6 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="px-2.5 py-0.5 bg-orange-100 text-warmOrange font-extrabold text-xs rounded-lg">${log.category}</span>
+                                <span class="text-xs text-softBrown font-medium"><i class="fa-regular fa-calendar mr-1"></i>${log.date}</span>
+                            </div>
+                            <h3 class="text-xl font-extrabold text-deepBrown">${log.placeName}</h3>
+                            <p class="text-xs text-softBrown flex items-center space-x-1.5">
+                                <i class="fa-solid fa-location-dot text-warmOrange"></i>
+                                <span class="truncate">${log.address}</span>
+                            </p>
+                            <div class="bg-cream p-3 rounded-2xl space-y-1">
+                                <p class="text-xs font-bold text-deepBrown">🍽️ 메뉴: <span class="font-normal text-softBrown">${log.menu}</span></p>
+                                <p class="text-xs font-bold text-deepBrown">💰 지출: <span class="font-normal text-warmOrange">${Number(log.spend).toLocaleString()}원</span></p>
+                            </div>
+                            <!-- Star ratings grid -->
+                            <div class="grid grid-cols-3 gap-2 text-center py-2 border-y border-borderLight text-xs">
+                                <div>
+                                    <span class="block text-softBrown text-[10px]">맛 평가</span>
+                                    <span class="font-extrabold text-amber-500">⭐ ${log.tasteRating}.0</span>
+                                </div>
+                                <div>
+                                    <span class="block text-softBrown text-[10px]">가격 만족</span>
+                                    <span class="font-extrabold text-amber-500">⭐ ${log.priceRating}.0</span>
+                                </div>
+                                <div>
+                                    <span class="block text-softBrown text-[10px]">분위기</span>
+                                    <span class="font-extrabold text-amber-500">⭐ ${log.moodRating}.0</span>
+                                </div>
+                            </div>
+                            ${log.review ? `<p class="text-xs text-deepBrown italic bg-orange-50/50 p-3 rounded-xl border border-orange-100">"${log.review}"</p>` : ''}
+                        </div>
+                    </div>
+                    <div class="px-6 pb-6 flex items-center justify-between pt-2">
+                        <span class="text-xs font-bold px-3 py-1 rounded-xl ${log.revisit === '있음' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}">
+                            재방문 의사: ${log.revisit}
+                        </span>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="editLog('${log.id}')" class="px-3 py-1.5 bg-cream hover:bg-orange-50 text-deepBrown font-bold text-xs rounded-xl border border-borderLight transition-all">수정</button>
+                            <button onclick="deleteLog('${log.id}')" class="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs rounded-xl transition-all">삭제</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // --- 8. MODAL & FORM HANDLERS ---
+        function openLogModal() {
+            document.getElementById('edit-log-id').value = '';
+            document.getElementById('modal-title').innerText = '새 밥먹자 기록 추가';
+            document.getElementById('log-form').reset();
+            document.getElementById('log-date').valueAsDate = new Date();
+            document.getElementById('log-modal').classList.remove('hidden');
+        }
+
+        function closeLogModal() {
+            document.getElementById('log-modal').classList.add('hidden');
+        }
+
+        function editLog(id) {
+            const log = logs.find(l => l.id === id);
+            if (!log) return;
+
+            document.getElementById('edit-log-id').value = log.id;
+            document.getElementById('modal-title').innerText = '밥먹자 기록 수정';
+            document.getElementById('log-place-name').value = log.placeName;
+            document.getElementById('log-address').value = log.address;
+            document.getElementById('log-place-type').value = log.placeType;
+            document.getElementById('log-access-type').value = log.accessType;
+            document.getElementById('log-category').value = log.category;
+            document.getElementById('log-date').value = log.date;
+            document.getElementById('log-spend').value = log.spend;
+            document.getElementById('log-menu').value = log.menu;
+            document.getElementById('log-rating-taste').value = log.tasteRating;
+            document.getElementById('log-rating-price').value = log.priceRating;
+            document.getElementById('log-rating-mood').value = log.moodRating;
+            document.getElementById('log-revisit').value = log.revisit;
+            document.getElementById('log-image').value = log.image || '';
+            document.getElementById('log-review').value = log.review || '';
+
+            document.getElementById('log-modal').classList.remove('hidden');
+        }
+
+        function handleLogFormSubmit(e) {
+            e.preventDefault();
+            const editId = document.getElementById('edit-log-id').value;
+
+            const newLogData = {
+                id: editId || ('log_' + Date.now()),
+                placeName: document.getElementById('log-place-name').value,
+                placeType: document.getElementById('log-place-type').value,
+                accessType: document.getElementById('log-access-type').value,
+                category: document.getElementById('log-category').value,
+                date: document.getElementById('log-date').value,
+                address: document.getElementById('log-address').value,
+                menu: document.getElementById('log-menu').value,
+                spend: Number(document.getElementById('log-spend').value),
+                tasteRating: Number(document.getElementById('log-rating-taste').value),
+                priceRating: Number(document.getElementById('log-rating-price').value),
+                moodRating: Number(document.getElementById('log-rating-mood').value),
+                revisit: document.getElementById('log-revisit').value,
+                image: document.getElementById('log-image').value,
+                review: document.getElementById('log-review').value
+            };
+
+            if (editId) {
+                const idx = logs.findIndex(l => l.id === editId);
+                if (idx !== -1) logs[idx] = newLogData;
+                showToast("기록이 성공적으로 수정되었습니다!", "success");
+            } else {
+                logs.unshift(newLogData);
+                showToast("새로운 밥먹자 기록이 저장되었습니다!", "success");
+            }
+
+            saveLogsToStorage();
+            closeLogModal();
+            renderAll();
+        }
+
+        function deleteLog(id) {
+            if (confirm("정말 이 기록을 삭제하시겠습니까?")) {
+                logs = logs.filter(l => l.id !== id);
+                saveLogsToStorage();
+                renderAll();
+                showToast("기록이 삭제되었습니다.", "success");
+            }
+        }
+
+        // --- 9. AI RECOMMENDATION ENGINE ---
+        function renderAiRecommendation() {
+            // Placeholder render function for initial load if needed
+            const container = document.getElementById('ai-results-container');
+            if (container && container.innerHTML.trim() === '') {
+                container.innerHTML = `<div class="bg-white p-8 rounded-3xl border border-borderLight text-center text-softBrand text-sm">위 설정에서 'AI 맞춤 추천 실행하기' 버튼을 눌러 나만의 맛집을 추천받아보세요!</div>`;
+            }
+        }
+
+        function runAiRecommendation() {
+            const purpose = document.getElementById('ai-purpose').value;
+            const budget = document.getElementById('ai-budget').value;
+            const region = document.getElementById('ai-region').value;
+            const container = document.getElementById('ai-results-container');
+
+            container.innerHTML = `<div class="bg-white p-12 rounded-3xl border border-borderLight text-center text-softBrown flex flex-col items-center justify-center space-y-3">
+                <i class="fa-solid fa-spinner fa-spin text-3xl text-warmOrange"></i>
+                <p class="font-bold text-deepBrown">AI가 고객님의 과거 기록과 취향을 분석 중입니다...</p>
+            </div>`;
+
+            setTimeout(() => {
+                let candidates = [...EXPLORE_PLACES];
+                if (region !== '전체') {
+                    candidates = candidates.filter(p => p.address.includes(region));
+                    if (candidates.length === 0) candidates = [...EXPLORE_PLACES];
+                }
+
+                const recs = candidates.slice(0, 3);
+
+                container.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between px-2">
+                            <h3 class="text-lg font-extrabold text-deepBrown flex items-center space-x-2">
+                                <i class="fa-solid fa-wand-magic-sparkles text-warmOrange"></i>
+                                <span>AI 추천 결과 (${purpose})</span>
+                            </h3>
+                            <span class="text-xs text-softBrown font-semibold">실제 검증된 장소 기반 추천</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            ${recs.map((p, idx) => `
+                                <div class="bg-white rounded-3xl border border-borderLight overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+                                    <div>
+                                        <div class="relative h-44 overflow-hidden">
+                                            <img src="${p.image}" class="w-full h-full object-cover">
+                                            <span class="absolute top-3 left-3 px-3 py-1 bg-warmOrange text-white font-extrabold text-xs rounded-xl">AI 추천 ${idx+1}순위</span>
+                                        </div>
+                                        <div class="p-5 space-y-3">
+                                            <div class="flex items-center justify-between">
+                                                <span class="text-xs font-bold text-warmOrange">${p.category}</span>
+                                                <div class="flex items-center space-x-1 text-xs font-bold text-amber-500 bg-amber-50 px-2 py-0.5 rounded-lg">
+                                                    <i class="fa-solid fa-star"></i>
+                                                    <span>${p.rating} (${p.reviewsCount})</span>
+                                                </div>
+                                            </div>
+                                            <h4 class="text-lg font-extrabold text-deepBrown">${p.name}</h4>
+                                            <p class="text-xs text-softBrown"><i class="fa-solid fa-location-dot text-warmOrange mr-1"></i>${p.address}</p>
+                                            
+                                            <div class="bg-orange-50/70 p-3.5 rounded-2xl border border-orange-100 text-xs text-deepBrown space-y-1">
+                                                <p class="font-extrabold text-warmOrange flex items-center space-x-1">
+                                                    <i class="fa-solid fa-brain"></i>
+                                                    <span>추천 적합도 ${95 - (idx * 4)}% & AI 분석 이유</span>
+                                                </p>
+                                                <p class="text-deepBrown/90 leading-relaxed">
+                                                    ${idx === 0 ? '이전에 높은 점수를 주셨던 카테고리와 유사하며, 최근 관심도와 평판이 가장 높은 최적의 장소입니다.' : idx === 1 ? '아직 방문해보지 않은 새로운 장소이나, 선호하시는 맛과 가격대 기준에 완벽하게 부합합니다.' : '실패 확률이 매우 낮고 가성비와 분위기를 모두 만족하는 검증된 인기 스폿입니다.'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="p-5 pt-0">
+                                        <button onclick="quickLogFromExplore('${p.name}', '${p.address}', '${p.type}', '${p.category}')" class="w-full py-2.5 bg-warmOrange hover:bg-orangeHover text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center space-x-2">
+                                            <i class="fa-solid fa-pen-nib"></i>
+                                            <span>이 장소 기록에 담기</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }, 800);
+        }
+
+        // --- 10. MYPAGE & STATISTICS DASHBOARD ---
+        function renderMypageDashboard() {
+            const totalCount = logs.length;
+            const totalSpend = logs.reduce((acc, cur) => acc + Number(cur.spend || 0), 0);
+            
+            document.getElementById('my-total-count').innerText = `${totalCount}개`;
+            document.getElementById('stat-total-spend').innerText = totalSpend.toLocaleString() + '원';
+
+            const avgTaste = totalCount > 0 ? (logs.reduce((acc, cur) => acc + Number(cur.tasteRating || 0), 0) / totalCount).toFixed(1) : '0.0';
+            document.getElementById('stat-avg-rating').innerText = `${avgTaste} / 5.0`;
+
+            const revisitCount = logs.filter(l => l.revisit === '있음').length;
+            const revisitRate = totalCount > 0 ? Math.round((revisitCount / totalCount) * 100) : 0;
+            document.getElementById('stat-revisit-rate').innerText = `${revisitRate}%`;
+
+            const tasteContainer = document.getElementById('taste-analysis-content');
+            if (totalCount === 0) {
+                tasteContainer.innerHTML = `<p class="text-softBrown text-sm">분석할 기록이 없습니다.</p>`;
+            } else {
+                const catCounts = {};
+                logs.forEach(l => { catCounts[l.category] = (catCounts[l.category] || 0) + 1; });
+                const topCategory = Object.entries(catCounts).sort((a,b) => b[1] - a[1])[0][0];
+
+                tasteContainer.innerHTML = `
+                    <div class="flex items-start space-x-3 bg-cream p-3.5 rounded-2xl border border-borderLight">
+                        <i class="fa-solid fa-medal text-warmOrange text-lg mt-0.5"></i>
+                        <div>
+                            <p class="font-bold text-deepBrown text-xs">최애 음식 카테고리</p>
+                            <p class="text-softBrown text-xs mt-0.5">고객님은 주로 <span class="font-extrabold text-warmOrange">${topCategory}</span> 카테고리의 맛집을 가장 즐겨 찾고 높게 평가하셨습니다.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-3 bg-cream p-3.5 rounded-2xl border border-borderLight">
+                        <i class="fa-solid fa-wallet text-warmOrange text-lg mt-0.5"></i>
+                        <div>
+                            <p class="font-bold text-deepBrown text-xs">평균 미식 지출</p>
+                            <p class="text-softBrown text-xs mt-0.5">1회 방문 시 평균 약 <span class="font-extrabold text-deepBrown">${Math.round(totalSpend / totalCount).toLocaleString()}원</span>을 지출하는 합리적인 소비 성향을 보이고 있습니다.</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            const barsContainer = document.getElementById('category-breakdown-bars');
+            if (totalCount === 0) {
+                barsContainer.innerHTML = `<p class="text-softBrown text-sm">데이터 없음</p>`;
+            } else {
+                const catCounts = {};
+                logs.forEach(l => { catCounts[l.category] = (catCounts[l.category] || 0) + 1; });
+                
+                barsContainer.innerHTML = Object.entries(catCounts).map(([cat, count]) => {
+                    const percent = Math.round((count / totalCount) * 100);
+                    return `
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs font-bold text-deepBrown">
+                                <span>${cat}</span>
+                                <span>${count}회 (${percent}%)</span>
+                            </div>
+                            <div class="w-full h-2.5 bg-cream rounded-full overflow-hidden border border-borderLight">
+                                <div class="h-full bg-warmOrange rounded-full" style="width: ${percent}%"></div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        function exportDataJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(logs, null, 2));
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", "bobmukja_backup.json");
+            document.body.appendChild(dlAnchorElem);
+            dlAnchorElem.click();
+            dlAnchorElem.remove();
+            showToast("미식 기록 데이터가 JSON 파일로 백업되었습니다!", "success");
+        }
+
+        window.onload = function() {
+            initApp();
+        };
+    </script>
+</body>
+</html>
